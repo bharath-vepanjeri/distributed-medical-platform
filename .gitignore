@@ -1,0 +1,10 @@
+target/
+.idea/
+*.iml
+.DS_Store
+application.properties
+HELP.md
+mvnw
+mvnw.cmd
+.mvn/
+.gitattributes

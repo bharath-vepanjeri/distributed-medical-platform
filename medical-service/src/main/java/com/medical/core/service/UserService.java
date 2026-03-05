@@ -1,0 +1,66 @@
+package com.medical.core.service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.medical.core.dto.UserRegisterRequest;
+import com.medical.core.dto.UserRegisterResponse;
+import com.medical.core.dto.WelcomeEmail;
+import com.medical.core.entity.Role;
+import com.medical.core.entity.User;
+import com.medical.core.exception.UserAlreadyExistsException;
+import com.medical.core.mapper.UserResponseMapper;
+import com.medical.core.repository.UserRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class UserService {
+
+    private final UserRepository userRepository;
+    private final UserResponseMapper userResponseMapper;
+    private final BCryptPasswordEncoder bCryptPasswordEncoder;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
+
+    public UserService(
+            UserRepository userRepository,
+            UserResponseMapper userResponseMapper,
+            BCryptPasswordEncoder bCryptPasswordEncoder,
+            KafkaTemplate kafkaTemplate,
+            ObjectMapper objectMapper) {
+        this.userRepository = userRepository;
+        this.userResponseMapper = userResponseMapper;
+        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+        this.kafkaTemplate = kafkaTemplate;
+        this.objectMapper = objectMapper;
+    }
+
+    @Transactional
+    public UserRegisterResponse register(UserRegisterRequest request) {
+
+        String hashedPassword = bCryptPasswordEncoder.encode(request.password());
+
+        // New users are always registered as PATIENT. DOCTOR/PHARMACIST roles are assigned by admin.
+        User newUser = new User(request.name(), request.email(), hashedPassword, Role.PATIENT);
+
+        User savedUser;
+        try {
+            savedUser = userRepository.save(newUser);
+        } catch (DataIntegrityViolationException ex) {
+            throw new UserAlreadyExistsException(request.email());
+        }
+
+        try {
+            WelcomeEmail welcomeEmail = new WelcomeEmail();
+            welcomeEmail.setEmail(newUser.getEmail());
+            kafkaTemplate.send("welcomeEmail", objectMapper.writeValueAsString(welcomeEmail));
+        } catch (JsonProcessingException ex) {
+            // TODO: add logging here
+        }
+
+        return userResponseMapper.mapToUserRegisterResponse(savedUser);
+    }
+}
