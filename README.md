@@ -5,7 +5,10 @@ A backend system built with Java and Spring Boot, designed as a set of loosely c
 ---
 
 ## Architecture
-![Architecture](docs/architecture.png)
+<p align="center">
+ <img src="docs/architecture.png" alt="Architecture" width="800"/>
+</p>
+
 ---
 
 ## Services
