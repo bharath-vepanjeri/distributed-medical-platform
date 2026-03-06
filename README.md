@@ -136,3 +136,4 @@ cd <service-folder>
 | POST | `/payments/initiate` | Internal | Create payment |
 | POST | `/api/webhook/stripe` | Stripe | Payment webhook |
  
+ 
