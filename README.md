@@ -5,23 +5,7 @@ A backend system built with Java and Spring Boot, designed as a set of loosely c
 ---
 
 ## Architecture
-
-```mermaid
-graph TD
-    Client -->|HTTP Request| AG[API Gateway :8080]
-    AG -->|JWT Validation + Rate Limiting| AG
-    AG -->|X-User-Id, X-User-Role headers| MS[Medical Service :7070]
-    AG -->|X-User-Id, X-User-Role headers| PS[Payment Service :8082]
-    MS -->|REST| PS
-    MS -->|Kafka: welcomeEmail| NS[Notification Service :8083]
-    MS -->|Kafka: appointment-status-email| NS
-    PS -->|Kafka: appointment-status| MS
-    MS <-->|Caching| Redis[(Redis)]
-    AG <-->|Rate Limiting| Redis
-    MS --- DB[(MySQL: medicaldb)]
-    PS --- DB2[(MySQL: payments)]
-```
-
+![Architecture](docs/architecture.png)
 ---
 
 ## Services
