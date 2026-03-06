@@ -1,6 +1,6 @@
 # Distributed Medical Platform
 
-A backend system built with Java and Spring Boot, designed as a set of loosely coupled microservices. The platform handles user authentication, medical data search, appointment booking, payment processing, and email notifications.
+A backend distributed system built with Java and Spring Boot, designed as a set of loosely coupled microservices. The platform handles user authentication, medical data search, appointment booking, payment processing, and email notifications.
 
 ---
 
@@ -135,3 +135,5 @@ cd <service-folder>
 | POST | `/api/v1/appointments/book` | PATIENT | Book appointment |
 | POST | `/payments/initiate` | Internal | Create payment |
 | POST | `/api/webhook/stripe` | Stripe | Payment webhook |
+ 
+ 
