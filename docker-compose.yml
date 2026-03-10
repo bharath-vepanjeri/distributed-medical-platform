@@ -1,5 +1,4 @@
 version: "3.8"
-
 services:
   mysql:
     image: mysql:8.0
@@ -10,10 +9,9 @@ services:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE: medical_db
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./docker/mysql:/docker-entrypoint-initdb.d
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
@@ -37,6 +35,17 @@ services:
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@medical-kafka:9093
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "kafka-broker-api-versions",
+          "--bootstrap-server",
+          "localhost:9092",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 5
     networks:
       - medical-network
 
@@ -45,22 +54,16 @@ services:
     container_name: medical-redis
     ports:
       - "6379:6379"
-    networks:
-      - medical-network
-
-  stripe:
-    image: stripe/stripe-cli:latest
-    container_name: medical-stripe
-    command: "listen --forward-to http://medical-payment:8082/api/webhook/stripe"
-    depends_on:
-      - payment-service
-    environment:
-      STRIPE_API_KEY: ${STRIPE_KEY}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
       - medical-network
 
   payment-service:
-    build: ./payment-service
+    image: payment:latest
     container_name: medical-payment
     ports:
       - "8082:8082"
@@ -75,26 +78,12 @@ services:
       mysql:
         condition: service_healthy
       kafka:
-        condition: service_started
-    networks:
-      - medical-network
-
-  notification-service:
-    build: ./notification-service
-    container_name: medical-notification
-    ports:
-      - "8083:8083"
-    environment:
-      MAIL_USERNAME: ${MAIL_USERNAME}
-      MAIL_PASSWORD: ${MAIL_PASSWORD}
-      SPRING_KAFKA_BOOTSTRAP_SERVERS: medical-kafka:9092
-    depends_on:
-      - kafka
+        condition: service_healthy
     networks:
       - medical-network
 
   medical-service:
-    build: ./medical-service
+    image: medical:latest
     container_name: medical-service
     ports:
       - "7070:7070"
@@ -110,16 +99,43 @@ services:
       mysql:
         condition: service_healthy
       kafka:
-        condition: service_started
+        condition: service_healthy
       redis:
+        condition: service_healthy
+      payment-service:
         condition: service_started
+    networks:
+      - medical-network
+
+  notification-service:
+    image: notification:latest
+    container_name: medical-notification
+    ports:
+      - "8083:8083"
+    environment:
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: medical-kafka:9092
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      - medical-network
+
+  stripe:
+    image: stripe/stripe-cli:latest
+    container_name: medical-stripe
+    command: "listen --forward-to http://medical-payment:8082/api/webhook/stripe"
+    environment:
+      STRIPE_API_KEY: ${STRIPE_KEY}
+    depends_on:
       payment-service:
         condition: service_started
     networks:
       - medical-network
 
   api-gateway:
-    build: ./api-gateway
+    image: api-gateway:latest
     container_name: medical-gateway
     ports:
       - "8080:8080"
@@ -129,9 +145,12 @@ services:
       JWT_KEY: ${JWT_KEY}
       SPRING_REDIS_HOST: medical-redis
     depends_on:
-      - medical-service
-      - payment-service
-      - redis
+      medical-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - medical-network
 

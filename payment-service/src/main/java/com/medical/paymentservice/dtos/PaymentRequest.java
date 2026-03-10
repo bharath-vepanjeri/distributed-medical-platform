@@ -9,27 +9,23 @@ import lombok.Setter;
 @Setter
 public class PaymentRequest {
   @NotBlank private String appointmentId;
-
   @NotNull private Long amount;
-
   @NotBlank private String currency;
-
   @NotBlank private String description;
+  private String patientName;
+  private String doctorName;
+  private String consultationPurpose;
 
   @Override
   public String toString() {
     return "PaymentRequest{"
-        + "appointmentId='"
-        + appointmentId
-        + '\''
-        + ", amount="
-        + amount
-        + ", currency='"
-        + currency
-        + '\''
-        + ", description='"
-        + description
-        + '\''
+        + "appointmentId='" + appointmentId + '\''
+        + ", amount=" + amount
+        + ", currency='" + currency + '\''
+        + ", description='" + description + '\''
+        + ", patientName='" + patientName + '\''
+        + ", doctorName='" + doctorName + '\''
+        + ", consultationPurpose='" + consultationPurpose + '\''
         + '}';
   }
 }

@@ -6,9 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(
-    name = "appointment",
-    uniqueConstraints = {@UniqueConstraint(columnNames = {"doctor_id", "appointment_time"})})
+@Table(name = "appointment", uniqueConstraints = {
+    @UniqueConstraint(columnNames = { "doctor_id", "appointment_time" }) })
 @Getter
 @Setter
 public class Appointment {
@@ -17,14 +16,14 @@ public class Appointment {
   private Long id;
 
   @Column(name = "patient_id")
-  private String patientId;
+  private Long patientId;
 
   @Version
   @Column(name = "version")
   private Long version;
 
   @Column(name = "doctor_id")
-  private String doctorId;
+  private Long doctorId;
 
   @Column(name = "appointment_time")
   private Instant appointmentTime;
@@ -38,6 +37,9 @@ public class Appointment {
 
   @Column(name = "amount")
   private Long amount;
+
+  @Column(name = "notes")
+  private String notes;
 
   @Override
   public String toString() {
@@ -59,6 +61,9 @@ public class Appointment {
         + '\''
         + ", amount="
         + amount
+        + ", notes='"
+        + notes
+        + '\''
         + '}';
   }
 }

@@ -21,31 +21,34 @@ public class StripePGAdapter implements PaymentGateway {
   public GatewayResponse createCheckoutSession(Payment payment) throws StripeException {
 
     Stripe.apiKey = stripeKey;
+    SessionCreateParams params = SessionCreateParams.builder()
+        .setMode(SessionCreateParams.Mode.PAYMENT)
+        .setSuccessUrl("https://medical.com/success?session_id={CHECKOUT_SESSION_ID}")
+        .setCancelUrl("https://medical.com/cancel")
+        .addLineItem(
+            SessionCreateParams.LineItem.builder()
+                .setQuantity(1L)
+                .setPriceData(
+                    SessionCreateParams.LineItem.PriceData.builder()
+                        .setCurrency(payment.getCurrency())
+                        .setUnitAmount(payment.getAmount())
+                        .setProductData(
+                            SessionCreateParams.LineItem.PriceData.ProductData.builder()
+                                .setName("Doctor Consultation - Dr. " + payment.getDoctorName())
+                                .setDescription(
+                                    "Patient: " + payment.getPatientName()
+                                        + " | Purpose: " + payment.getConsultationPurpose())
+                                .build())
+                        .build())
+                .build())
+        .putMetadata("appointmentId", payment.getAppointmentId())
+        .putMetadata("paymentId", payment.getId().toString())
+        .putMetadata("patientName", payment.getPatientName())
+        .putMetadata("doctorName", payment.getDoctorName())
+        .putMetadata("consultationPurpose", payment.getConsultationPurpose())
+        .build();
 
-    SessionCreateParams params =
-        SessionCreateParams.builder()
-            .setMode(SessionCreateParams.Mode.PAYMENT)
-            .setSuccessUrl("https://medical.com/success?session_id={CHECKOUT_SESSION_ID}")
-            .setCancelUrl("https://medical.com/cancel")
-            .addLineItem(
-                SessionCreateParams.LineItem.builder()
-                    .setQuantity(1L)
-                    .setPriceData(
-                        SessionCreateParams.LineItem.PriceData.builder()
-                            .setCurrency(payment.getCurrency())
-                            .setUnitAmount(payment.getAmount())
-                            .setProductData(
-                                SessionCreateParams.LineItem.PriceData.ProductData.builder()
-                                    .setName(payment.getDescription())
-                                    .build())
-                            .build())
-                    .build())
-            .putMetadata("appointmentId", payment.getAppointmentId())
-            .putMetadata("paymentId", payment.getId().toString())
-            .build();
-
-    RequestOptions options =
-        RequestOptions.builder().setIdempotencyKey(payment.getIdempotencyKey()).build();
+    RequestOptions options = RequestOptions.builder().setIdempotencyKey(payment.getIdempotencyKey()).build();
 
     Session session = Session.create(params, options);
 

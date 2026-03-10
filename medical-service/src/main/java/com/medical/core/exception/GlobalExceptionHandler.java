@@ -22,10 +22,9 @@ public class GlobalExceptionHandler {
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ErrorResponse handleValidationError(MethodArgumentNotValidException exception) {
     // Extract the specific field error message (e.g., "Email is required")
-    String detailedMessage =
-        exception.getBindingResult().getFieldErrors().stream()
-            .map(error -> error.getField() + ": " + error.getDefaultMessage())
-            .collect(Collectors.joining(", "));
+    String detailedMessage = exception.getBindingResult().getFieldErrors().stream()
+        .map(error -> error.getField() + ": " + error.getDefaultMessage())
+        .collect(Collectors.joining(", "));
 
     return new ErrorResponse(detailedMessage, "INVALID_REQUEST", LocalDateTime.now());
   }
@@ -151,5 +150,11 @@ public class GlobalExceptionHandler {
         "The record was modified by another transaction. Please try again.",
         "CONCURRENT_MODIFICATION",
         LocalDateTime.now());
+  }
+
+  @ExceptionHandler(InvalidDoctorException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ErrorResponse handleInvalidDoctor(InvalidDoctorException ex) {
+    return new ErrorResponse(ex.getMessage(), "INVALID_DOCTOR", LocalDateTime.now());
   }
 }

@@ -13,6 +13,9 @@ public class PaymentMapper {
     payment.setAppointmentId(request.getAppointmentId());
     payment.setAmount(request.getAmount());
     payment.setCurrency(request.getCurrency());
+    payment.setPatientName(request.getPatientName());
+    payment.setDoctorName(request.getDoctorName());
+    payment.setConsultationPurpose(request.getConsultationPurpose());
     payment.setDescription(request.getDescription());
     payment.setPaymentStatus(PaymentStatus.INITIATED);
     payment.setGateway(Gateway.STRIPE);

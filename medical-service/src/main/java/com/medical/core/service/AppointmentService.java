@@ -3,15 +3,12 @@ package com.medical.core.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medical.core.dto.*;
-import com.medical.core.entity.Appointment;
-import com.medical.core.entity.AppointmentStatus;
-import com.medical.core.entity.PaymentStatus;
-import com.medical.core.entity.User;
+import com.medical.core.entity.*;
 import com.medical.core.exception.AppointmentAlreadyExistsException;
+import com.medical.core.exception.InvalidDoctorException;
+import com.medical.core.exception.UserNotFoundException;
 import com.medical.core.repository.AppointmentRepository;
 import com.medical.core.repository.UserRepository;
-
-import java.time.Instant;
 import java.util.Optional;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -44,10 +41,22 @@ public class AppointmentService {
   @Transactional
   public PaymentResponse createAppointment(String patientId, AppointmentRequest request) {
 
-    Appointment appointment = createAppointmentRecord(patientId, request);
+    // Validate doctor
+    User doctor = userRepository.findById(request.getDoctorId())
+        .orElseThrow(() -> new UserNotFoundException(request.getDoctorId().toString()));
+
+    if (doctor.getRole() != Role.DOCTOR) {
+      throw new InvalidDoctorException(request.getDoctorId().toString());
+    }
+
+    // Validate patient
+    User patient = userRepository.findById(Long.valueOf(patientId))
+        .orElseThrow(() -> new UserNotFoundException(patientId));
+
+    Appointment appointment = createAppointmentRecord(patientId, request, doctor);
 
     try {
-      PaymentResponse paymentResponse = initiatePayment(appointment);
+      PaymentResponse paymentResponse = initiatePayment(appointment, doctor, patient);
       appointment.setPaymentId(paymentResponse.getPaymentId());
       appointmentRepository.save(appointment);
       return paymentResponse;
@@ -58,14 +67,15 @@ public class AppointmentService {
     }
   }
 
-  protected Appointment createAppointmentRecord(String patientId, AppointmentRequest request) {
+  private Appointment createAppointmentRecord(String patientId, AppointmentRequest request, User doctor) {
 
     Appointment appointment = new Appointment();
-    appointment.setPatientId(patientId);
-    appointment.setDoctorId(String.valueOf(request.getDoctorId()));
+    appointment.setPatientId(Long.valueOf(patientId));
+    appointment.setDoctorId(doctor.getId());
     appointment.setAppointmentTime(request.getAppointmentTime().toInstant(java.time.ZoneOffset.UTC));
     appointment.setStatus(AppointmentStatus.PENDING_PAYMENT);
     appointment.setAmount(50000L);
+    appointment.setNotes(request.getNotes());
 
     try {
       return appointmentRepository.save(appointment);
@@ -74,13 +84,16 @@ public class AppointmentService {
     }
   }
 
-  private PaymentResponse initiatePayment(Appointment appointment) {
+  private PaymentResponse initiatePayment(Appointment appointment, User doctor, User patient) {
 
     PaymentRequest paymentRequest = new PaymentRequest();
     paymentRequest.setAppointmentId(appointment.getId().toString());
     paymentRequest.setAmount(appointment.getAmount());
     paymentRequest.setCurrency("inr");
     paymentRequest.setDescription("Doctor Consultation");
+    paymentRequest.setPatientName(patient.getName());
+    paymentRequest.setDoctorName(doctor.getName());
+    paymentRequest.setConsultationPurpose(appointment.getNotes());
 
     return paymentClient.createPayment(paymentRequest);
   }
@@ -114,7 +127,7 @@ public class AppointmentService {
 
     appointmentRepository.save(appointment);
 
-    User user = userRepository.findById(Long.valueOf(appointment.getPatientId()))
+    User user = userRepository.findById(appointment.getPatientId())
         .orElseThrow(() -> new IllegalStateException("User not found for patientId: " + appointment.getPatientId()));
 
     AppointmentResponse from = AppointmentResponse.from(appointment);

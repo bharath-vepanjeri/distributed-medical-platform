@@ -17,7 +17,7 @@ public class Payment {
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-    @Column(nullable = false, unique = true)
+  @Column(nullable = false, unique = true)
   private String appointmentId;
   @Column(unique = true)
   private String gatewayReference;
@@ -28,28 +28,35 @@ public class Payment {
   @Column(length = 2048)
   private String checkoutUrl;
   private String currency;
+
+  private String patientName;
+  private String doctorName;
+  private String consultationPurpose;
+
   @Enumerated(EnumType.STRING)
   private PaymentStatus paymentStatus;
   @Column(nullable = false)
   private String idempotencyKey;
-  @CreatedDate private Instant createdAt;
-  @LastModifiedDate private Instant updatedAt;
+  @CreatedDate
+  private Instant createdAt;
+  @LastModifiedDate
+  private Instant updatedAt;
 
-    @Override
-    public String toString() {
-        return "Payment{" +
-                "id=" + id +
-                ", appointmentId='" + appointmentId + '\'' +
-                ", gatewayReference='" + gatewayReference + '\'' +
-                ", amount=" + amount +
-                ", description='" + description + '\'' +
-                ", gateway=" + gateway +
-                ", checkoutUrl='" + checkoutUrl + '\'' +
-                ", currency='" + currency + '\'' +
-                ", paymentStatus=" + paymentStatus +
-                ", idempotencyKey='" + idempotencyKey + '\'' +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "Payment{" +
+        "id=" + id +
+        ", appointmentId='" + appointmentId + '\'' +
+        ", gatewayReference='" + gatewayReference + '\'' +
+        ", amount=" + amount +
+        ", description='" + description + '\'' +
+        ", gateway=" + gateway +
+        ", checkoutUrl='" + checkoutUrl + '\'' +
+        ", currency='" + currency + '\'' +
+        ", paymentStatus=" + paymentStatus +
+        ", idempotencyKey='" + idempotencyKey + '\'' +
+        ", createdAt=" + createdAt +
+        ", updatedAt=" + updatedAt +
+        '}';
+  }
 }

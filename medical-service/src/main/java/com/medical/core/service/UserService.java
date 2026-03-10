@@ -8,6 +8,7 @@ import com.medical.core.dto.WelcomeEmail;
 import com.medical.core.entity.Role;
 import com.medical.core.entity.User;
 import com.medical.core.exception.UserAlreadyExistsException;
+import com.medical.core.exception.UserNotFoundException;
 import com.medical.core.mapper.UserResponseMapper;
 import com.medical.core.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +47,6 @@ public class UserService {
     String hashedPassword = bCryptPasswordEncoder.encode(request.getPassword());
 
     // New users are always registered as PATIENT. DOCTOR/PHARMACIST roles are
-    // assigned by admin.
     User newUser = new User(request.getName(), request.getEmail(), hashedPassword, Role.PATIENT);
 
     User savedUser;
@@ -61,9 +61,17 @@ public class UserService {
       welcomeEmail.setEmail(newUser.getEmail());
       kafkaTemplate.send("welcomeEmail", objectMapper.writeValueAsString(welcomeEmail));
     } catch (JsonProcessingException ex) {
-        log.warn("Failed to serialize welcome email for: {}", newUser.getEmail(), ex);
+      log.warn("Failed to serialize welcome email for: {}", newUser.getEmail(), ex);
     }
 
     return userResponseMapper.mapToUserRegisterResponse(savedUser);
   }
+
+  @Transactional
+  public UserRegisterResponse updateRole(Long userId, Role role) {
+    User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException(userId.toString()));
+    user.setRole(role);
+    return userResponseMapper.mapToUserRegisterResponse(userRepository.save(user));
+  }
+
 }

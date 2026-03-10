@@ -19,6 +19,10 @@ public class PaymentRequest {
   // Visible in Stripe checkout page
   private String description;
 
+  private String patientName;
+  private String doctorName;
+  private String consultationPurpose;
+
   @Override
   public String toString() {
     return "PaymentRequest{"
