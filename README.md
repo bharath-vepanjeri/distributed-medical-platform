@@ -101,7 +101,7 @@ Email sending is decoupled from the main request flow. A failed email does not r
 | `MAIL_USERNAME` | notification-service |
 | `MAIL_PASSWORD` | notification-service |
 
-See `application.properties.example` in each service for full configuration reference.
+See `application.properties` in each service for full configuration reference.
 
 **Start order**
 ```
