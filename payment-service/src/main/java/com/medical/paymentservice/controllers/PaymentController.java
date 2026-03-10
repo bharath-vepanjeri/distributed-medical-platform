@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @Validated
 public class PaymentController {
 
-  PaymentService paymentService;
+  private final PaymentService paymentService;
 
   public PaymentController(PaymentService paymentService) {
     this.paymentService = paymentService;

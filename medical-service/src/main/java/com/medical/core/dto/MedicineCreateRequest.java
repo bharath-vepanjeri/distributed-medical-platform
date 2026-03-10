@@ -7,4 +7,5 @@ public record MedicineCreateRequest(
     @NotBlank(message = "Usage information is required") String usage,
     @NotBlank(message = "Dosage is required") String dosage,
     @NotBlank(message = "Pregnancy warning is required") String pregnancyWarning,
-    @NotBlank(message = "Severity level is required") String severityLevel) {}
+    @NotBlank(message = "Severity level is required") String severityLevel) {
+}

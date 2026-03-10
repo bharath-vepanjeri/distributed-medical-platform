@@ -24,45 +24,54 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @ExtendWith(MockitoExtension.class)
 class LoginServiceTest {
 
-    @Mock private UserRepository userRepository;
-    @Mock private BCryptPasswordEncoder bCryptPasswordEncoder;
-    @Mock private JwtUtil jwtUtil;
-    @InjectMocks private LoginService loginService;
+  @Mock
+  private UserRepository userRepository;
+  @Mock
+  private BCryptPasswordEncoder bCryptPasswordEncoder;
+  @Mock
+  private JwtUtil jwtUtil;
+  @InjectMocks
+  private LoginService loginService;
 
-    private User testUser;
-    private UserLoginRequest loginRequest;
+  private User testUser;
+  private UserLoginRequest loginRequest;
 
-    @BeforeEach
-    void setUp() {
-        testUser = new User("John Doe", "john@test.com", "hashed_pass", Role.DOCTOR);
-        testUser.setId(1L);
-        loginRequest = new UserLoginRequest("john@test.com", "raw_password");
-    }
+  @BeforeEach
+  void setUp() {
+    testUser = new User("John Doe", "john@test.com", "hashed_pass", Role.DOCTOR);
+    testUser.setId(1L);
+      loginRequest = new UserLoginRequest();
+      loginRequest.setEmail("john@test.com");
+      loginRequest.setPassword("raw_password");
+  }
 
-    @Test
-    void authenticate_Success() {
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
-        when(bCryptPasswordEncoder.matches("raw_password", "hashed_pass")).thenReturn(true);
-        when(jwtUtil.generateToken(anyLong(), anyString(), anyString())).thenReturn("mocked_jwt_token");
+  @Test
+  void authenticate_Success() {
+    when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
+    when(bCryptPasswordEncoder.matches("raw_password", "hashed_pass")).thenReturn(true);
+    when(jwtUtil.generateToken(anyLong(), anyString(), anyString())).thenReturn("mocked_jwt_token");
 
-        UserLoginResponse response = loginService.authenticate(loginRequest);
+    UserLoginResponse response = loginService.authenticate(loginRequest);
 
-        assertNotNull(response);
-        assertEquals("mocked_jwt_token", response.token());
-        assertEquals("john@test.com", response.email());
-        verify(userRepository).findByEmail("john@test.com");
-    }
+    assertNotNull(response);
+    assertEquals("mocked_jwt_token", response.token());
+    assertEquals("john@test.com", response.email());
+    verify(userRepository).findByEmail("john@test.com");
+  }
 
-    @Test
-    void authenticate_UserNotFound_ThrowsException() {
-        when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
-        UserLoginRequest invalidRequest = new UserLoginRequest("unknown@test.com", "pass");
-    }
+  @Test
+  void authenticate_UserNotFound_ThrowsException() {
+    when(userRepository.findByEmail("unknown@test.com")).thenReturn(Optional.empty());
+      UserLoginRequest invalidRequest = new UserLoginRequest();
+      invalidRequest.setEmail("unknown@test.com");
+      invalidRequest.setPassword("pass");
+    assertThrows(UserNotFoundException.class, () -> loginService.authenticate(invalidRequest));
+  }
 
-    @Test
-    void authenticate_WrongPassword_ThrowsException() {
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
-        when(bCryptPasswordEncoder.matches(anyString(), anyString())).thenReturn(false);
-        assertThrows(InvalidCredentialsException.class, () -> loginService.authenticate(loginRequest));
-    }
+  @Test
+  void authenticate_WrongPassword_ThrowsException() {
+    when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(testUser));
+    when(bCryptPasswordEncoder.matches(anyString(), anyString())).thenReturn(false);
+    assertThrows(InvalidCredentialsException.class, () -> loginService.authenticate(loginRequest));
+  }
 }

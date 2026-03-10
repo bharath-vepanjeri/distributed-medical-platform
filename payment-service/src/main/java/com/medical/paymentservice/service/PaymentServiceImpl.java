@@ -62,6 +62,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     payment.setGatewayReference(gatewayResponse.getPaymentReference());
     payment.setCheckoutUrl(gatewayResponse.getCheckoutUrl());
+    paymentRepository.save(payment);
 
     return PaymentResponse.from(payment);
   }
@@ -106,6 +107,9 @@ public class PaymentServiceImpl implements PaymentService {
             SessionListParams.builder().setPaymentIntent(intent.getId()).build();
 
         SessionCollection sessions = Session.list(params);
+        if (sessions.getData().isEmpty()) {
+          return ResponseEntity.ok("No session found");
+        }
         String paymentId = sessions.getData().get(0).getMetadata().get("paymentId");
 
         payment =

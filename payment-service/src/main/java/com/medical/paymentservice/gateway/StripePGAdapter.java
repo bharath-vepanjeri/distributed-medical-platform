@@ -55,7 +55,4 @@ public class StripePGAdapter implements PaymentGateway {
         .expiresAt(Instant.ofEpochSecond(session.getExpiresAt()))
         .build();
   }
-
-  @Override
-  public void verifyWebhookSignature(String payload, String signature) {}
 }

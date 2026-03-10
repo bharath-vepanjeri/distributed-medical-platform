@@ -37,6 +37,12 @@ public class AppointmentConsumer {
           message,
           e.getMessage(),
           e);
+    } catch (Exception e) {
+      log.error(
+          "Unexpected error processing appointment email. Message: {}, Error: {}",
+          message,
+          e.getMessage(),
+          e);
     }
   }
 }

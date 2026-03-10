@@ -46,11 +46,12 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
 
         String token = authHeader.substring(7);
 
-        if (!jwtUtil.validateToken(token)) {
+        Claims claims;
+        try {
+            claims = jwtUtil.validateAndExtract(token);
+        } catch (Exception e) {
             return rejectRequest(exchange, "Invalid or expired token");
         }
-
-        Claims claims = jwtUtil.extractClaims(token);
 
         ServerWebExchange mutatedExchange = exchange.mutate()
                 .request(exchange.getRequest().mutate()

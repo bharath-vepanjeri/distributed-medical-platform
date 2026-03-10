@@ -3,7 +3,6 @@ package com.medical.core.service;
 import com.medical.core.dto.PaymentRequest;
 import com.medical.core.dto.PaymentResponse;
 import com.medical.core.exception.PaymentServiceUnavailableException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;

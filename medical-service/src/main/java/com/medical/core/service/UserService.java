@@ -10,57 +10,60 @@ import com.medical.core.entity.User;
 import com.medical.core.exception.UserAlreadyExistsException;
 import com.medical.core.mapper.UserResponseMapper;
 import com.medical.core.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 public class UserService {
 
-    private final UserRepository userRepository;
-    private final UserResponseMapper userResponseMapper;
-    private final BCryptPasswordEncoder bCryptPasswordEncoder;
-    private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
+  private final UserRepository userRepository;
+  private final UserResponseMapper userResponseMapper;
+  private final BCryptPasswordEncoder bCryptPasswordEncoder;
+  private final KafkaTemplate<String, String> kafkaTemplate;
+  private final ObjectMapper objectMapper;
 
-    public UserService(
-            UserRepository userRepository,
-            UserResponseMapper userResponseMapper,
-            BCryptPasswordEncoder bCryptPasswordEncoder,
-            KafkaTemplate kafkaTemplate,
-            ObjectMapper objectMapper) {
-        this.userRepository = userRepository;
-        this.userResponseMapper = userResponseMapper;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.kafkaTemplate = kafkaTemplate;
-        this.objectMapper = objectMapper;
+  public UserService(
+      UserRepository userRepository,
+      UserResponseMapper userResponseMapper,
+      BCryptPasswordEncoder bCryptPasswordEncoder,
+      KafkaTemplate kafkaTemplate,
+      ObjectMapper objectMapper) {
+    this.userRepository = userRepository;
+    this.userResponseMapper = userResponseMapper;
+    this.bCryptPasswordEncoder = bCryptPasswordEncoder;
+    this.kafkaTemplate = kafkaTemplate;
+    this.objectMapper = objectMapper;
+  }
+
+  @Transactional
+  public UserRegisterResponse register(UserRegisterRequest request) {
+
+    String hashedPassword = bCryptPasswordEncoder.encode(request.getPassword());
+
+    // New users are always registered as PATIENT. DOCTOR/PHARMACIST roles are
+    // assigned by admin.
+    User newUser = new User(request.getName(), request.getEmail(), hashedPassword, Role.PATIENT);
+
+    User savedUser;
+    try {
+      savedUser = userRepository.save(newUser);
+    } catch (DataIntegrityViolationException ex) {
+      throw new UserAlreadyExistsException(request.getEmail());
     }
 
-    @Transactional
-    public UserRegisterResponse register(UserRegisterRequest request) {
-
-        String hashedPassword = bCryptPasswordEncoder.encode(request.password());
-
-        // New users are always registered as PATIENT. DOCTOR/PHARMACIST roles are assigned by admin.
-        User newUser = new User(request.name(), request.email(), hashedPassword, Role.PATIENT);
-
-        User savedUser;
-        try {
-            savedUser = userRepository.save(newUser);
-        } catch (DataIntegrityViolationException ex) {
-            throw new UserAlreadyExistsException(request.email());
-        }
-
-        try {
-            WelcomeEmail welcomeEmail = new WelcomeEmail();
-            welcomeEmail.setEmail(newUser.getEmail());
-            kafkaTemplate.send("welcomeEmail", objectMapper.writeValueAsString(welcomeEmail));
-        } catch (JsonProcessingException ex) {
-            // TODO: add logging here
-        }
-
-        return userResponseMapper.mapToUserRegisterResponse(savedUser);
+    try {
+      WelcomeEmail welcomeEmail = new WelcomeEmail();
+      welcomeEmail.setEmail(newUser.getEmail());
+      kafkaTemplate.send("welcomeEmail", objectMapper.writeValueAsString(welcomeEmail));
+    } catch (JsonProcessingException ex) {
+        log.warn("Failed to serialize welcome email for: {}", newUser.getEmail(), ex);
     }
+
+    return userResponseMapper.mapToUserRegisterResponse(savedUser);
+  }
 }

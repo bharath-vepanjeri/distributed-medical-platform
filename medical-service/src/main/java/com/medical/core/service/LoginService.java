@@ -11,7 +11,6 @@ import com.medical.core.security.JwtUtil;
 import java.time.LocalDateTime;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -20,7 +19,6 @@ public class LoginService {
   private final UserRepository userRepository;
   private final BCryptPasswordEncoder bCryptPasswordEncoder;
   private final JwtUtil jwtUtil;
-
 
   public LoginService(
       UserRepository userRepository, BCryptPasswordEncoder bCryptPasswordEncoder, JwtUtil jwtUtil) {
@@ -31,18 +29,17 @@ public class LoginService {
 
   public UserLoginResponse authenticate(UserLoginRequest request) {
     // 1. Find user by email
-    User user =
-        userRepository
-            .findByEmail(request.email())
-            .orElseThrow(() -> new UserNotFoundException(request.email()));
+    User user = userRepository
+        .findByEmail(request.getEmail())
+        .orElseThrow(() -> new UserNotFoundException(request.getEmail()));
 
     // 2. Check if account is active
     if (!user.isActive()) {
-      throw new UserInactiveException(request.email());
+      throw new UserInactiveException(request.getEmail());
     }
 
     // 3. Verify password
-    if (!bCryptPasswordEncoder.matches(request.password(), user.getPassword())) {
+    if (!bCryptPasswordEncoder.matches(request.getPassword(), user.getPassword())) {
       throw new InvalidCredentialsException();
     }
 

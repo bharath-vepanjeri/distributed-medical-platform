@@ -6,6 +6,4 @@ import com.stripe.exception.StripeException;
 
 public interface PaymentGateway {
   GatewayResponse createCheckoutSession(Payment payment) throws StripeException;
-
-  void verifyWebhookSignature(String payload, String signature);
 }
