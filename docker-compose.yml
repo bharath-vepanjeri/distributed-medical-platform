@@ -1,0 +1,143 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: medical-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: medical_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - medical-network
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: medical-kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://medical-kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@medical-kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    networks:
+      - medical-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: medical-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - medical-network
+
+  stripe:
+    image: stripe/stripe-cli:latest
+    container_name: medical-stripe
+    command: "listen --forward-to http://medical-payment:8082/api/webhook/stripe"
+    depends_on:
+      - payment-service
+    environment:
+      STRIPE_API_KEY: ${STRIPE_KEY}
+    networks:
+      - medical-network
+
+  payment-service:
+    build: ./payment-service
+    container_name: medical-payment
+    ports:
+      - "8082:8082"
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATASOURCE_URL: jdbc:mysql://medical-mysql:3306/payment_db
+      STRIPE_KEY: ${STRIPE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: medical-kafka:9092
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - medical-network
+
+  notification-service:
+    build: ./notification-service
+    container_name: medical-notification
+    ports:
+      - "8083:8083"
+    environment:
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: medical-kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - medical-network
+
+  medical-service:
+    build: ./medical-service
+    container_name: medical-service
+    ports:
+      - "7070:7070"
+    environment:
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_KEY: ${JWT_KEY}
+      PAYMENT_URL: http://medical-payment:8082/payments/initiate
+      SPRING_DATASOURCE_URL: jdbc:mysql://medical-mysql:3306/medical_db
+      SPRING_REDIS_HOST: medical-redis
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: medical-kafka:9092
+    depends_on:
+      mysql:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      redis:
+        condition: service_started
+      payment-service:
+        condition: service_started
+    networks:
+      - medical-network
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: medical-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      MEDICAL_URL: http://medical-service:7070
+      PAYMENT_URL: http://medical-payment:8082
+      JWT_KEY: ${JWT_KEY}
+      SPRING_REDIS_HOST: medical-redis
+    depends_on:
+      - medical-service
+      - payment-service
+      - redis
+    networks:
+      - medical-network
+
+networks:
+  medical-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
