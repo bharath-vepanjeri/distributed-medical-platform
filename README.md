@@ -1,17 +1,42 @@
 # Distributed Medical Platform
 
-A production-grade backend system built with Java and Spring Boot, designed as a set of loosely coupled microservices. The platform handles user authentication, medical data search, appointment booking, Stripe payment processing, and email notifications — deployed on Google Cloud Platform.
+## Live Demo
+
+| Service                 | URL                                             |
+| ----------------------- | ----------------------------------------------- |
+| Medical Service Swagger | http://34.57.234.163:7070/swagger-ui/index.html |
+| Payment Service Swagger | http://34.57.234.163:8082/swagger-ui/index.html |
+| API Gateway             | http://34.57.234.163:8080                       |
+
+> Deployed on GCP (e2-standard-2, Ubuntu) using Docker Compose.
 
 ---
 
-## Live Demo
+## Screenshots
 
-| Service             | Swagger URL                                     |
-| ------------------- | ----------------------------------------------- |
-| Medical Service API | http://34.57.234.163:7070/swagger-ui/index.html |
-| Payment Service API | http://34.57.234.163:8082/swagger-ui/index.html |
+### Swagger UI — Medical Service
 
-> Deployed on Google Cloud Platform (GCE e2-standard-2) · Docker Compose · Java 17 · Spring Boot 3
+<p align="center">
+  <img src="docs/screenshots/swagger-medical.png" alt="Medical Service Swagger UI" width="800"/>
+</p>
+
+### Swagger UI — Payment Service
+
+<p align="center">
+  <img src="docs/screenshots/swagger-payment.png" alt="Payment Service Swagger UI" width="800"/>
+</p>
+
+### Email Notifications (via Kafka → Notification Service)
+
+<p align="center">
+  <img src="docs/screenshots/email-welcome.png" alt="Welcome Email" width="700"/>
+</p>
+<p align="center">
+  <img src="docs/screenshots/email-appointment-confirmed.png" alt="Appointment Confirmed Email" width="700"/>
+</p>
+<p align="center">
+  <img src="docs/screenshots/email-appointment-cancelled.png" alt="Appointment Cancelled Email" width="700"/>
+</p>
 
 ---
 
