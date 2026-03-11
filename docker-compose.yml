@@ -91,6 +91,7 @@ services:
       DB_USERNAME: ${DB_USERNAME}
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_KEY: ${JWT_KEY}
+      SERVER_URL: http://{HOST_IP}:8080
       PAYMENT_URL: http://medical-payment:8082/payments/initiate
       SPRING_DATASOURCE_URL: jdbc:mysql://medical-mysql:3306/medical_db
       SPRING_REDIS_HOST: medical-redis
