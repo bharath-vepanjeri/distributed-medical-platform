@@ -1,12 +1,10 @@
-![CI](https://github.com/bharath-vepanjeri/distributed-medical-platform/actions/workflows/ci.yml/badge.svg)
-
 # Distributed Medical Platform
 
 A production-grade backend system built with Java and Spring Boot, designed as a set of loosely coupled microservices. The platform handles user authentication, medical data search, appointment booking, Stripe payment processing, and email notifications — deployed on Google Cloud Platform.
 
 ---
 
-## 🚀 Live Demo
+## Live Demo
 
 | Service             | Swagger URL                                     |
 | ------------------- | ----------------------------------------------- |
