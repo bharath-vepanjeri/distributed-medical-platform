@@ -1,32 +1,37 @@
 # Distributed Medical Platform
 
+A backend system built with Java and Spring Boot, designed as a set of loosely coupled microservices. The platform handles user authentication, medical data search, appointment booking, payment processing, and email notifications.
+
+---
+
 ## Live Demo
 
 | Service                 | URL                                             |
 | ----------------------- | ----------------------------------------------- |
-| Medical Service Swagger | http://34.57.234.163:7070/swagger-ui/index.html |
-| Payment Service Swagger | http://34.57.234.163:8082/swagger-ui/index.html |
 | API Gateway             | http://34.57.234.163:8080                       |
+| Medical Service Swagger | http://34.57.234.163:7070/swagger-ui/index.html |
 
-> Deployed on GCP (e2-standard-2, Ubuntu) using Docker Compose.
+> Deployed on GCP using Docker Compose. All client requests go through the API Gateway on port 8080.
+
+---
+
+## Architecture
+
+<p align="center">
+  <img src="docs/architecture.png" alt="Architecture" width="800"/>
+</p>
 
 ---
 
 ## Screenshots
 
-### Swagger UI — Medical Service
+### Medical Service — Swagger UI
 
 <p align="center">
   <img src="docs/screenshots/swagger-medical.png" alt="Medical Service Swagger UI" width="800"/>
 </p>
 
-### Swagger UI — Payment Service
-
-<p align="center">
-  <img src="docs/screenshots/swagger-payment.png" alt="Payment Service Swagger UI" width="800"/>
-</p>
-
-### Email Notifications (via Kafka → Notification Service)
+### Email Notifications (via Kafka → Notification Service → Gmail SMTP)
 
 <p align="center">
   <img src="docs/screenshots/email-welcome.png" alt="Welcome Email" width="700"/>
@@ -36,14 +41,6 @@
 </p>
 <p align="center">
   <img src="docs/screenshots/email-appointment-cancelled.png" alt="Appointment Cancelled Email" width="700"/>
-</p>
-
----
-
-## Architecture
-
-<p align="center">
-  <img src="docs/architecture.png" alt="Architecture" width="800"/>
 </p>
 
 ---
@@ -66,14 +63,14 @@
 - Publishes Kafka events on user registration and appointment status changes
 - Communicates with Payment Service via REST
 
-### Payment Service (Port 8082)
+### Payment Service (Port 8082 — Internal)
 
 - Stripe Checkout session creation with idempotency key (prevents duplicate charges on retry)
 - Webhook handler for `checkout.session.completed` and `payment_intent.payment_failed` events
 - Gateway pattern (`PaymentGateway` interface + `StripePGAdapter`) — easily swap payment providers
 - Publishes payment status back to Medical Service via Kafka
 
-### Notification Service (Port 8083)
+### Notification Service (Port 8083 — Internal)
 
 - Kafka consumers for welcome emails and appointment confirmation/cancellation
 - HTML email templates for professional notifications
@@ -156,7 +153,6 @@ All 8 containers start automatically in the correct order with health checks.
 | ----------------------- | ------------------------------------------- |
 | API Gateway             | http://localhost:8080                       |
 | Medical Service Swagger | http://localhost:7070/swagger-ui/index.html |
-| Payment Service Swagger | http://localhost:8082/swagger-ui/index.html |
 
 ---
 
@@ -178,8 +174,6 @@ Copy `.env.example` to `.env` and fill in your values:
 
 ## Docker Hub Images
 
-All service images are published on Docker Hub:
-
 | Image                                          | Link                                                                         |
 | ---------------------------------------------- | ---------------------------------------------------------------------------- |
 | `bharathvepanjeri/medical-service:latest`      | [Docker Hub](https://hub.docker.com/r/bharathvepanjeri/medical-service)      |
@@ -191,19 +185,15 @@ All service images are published on Docker Hub:
 
 ## API Overview
 
-| Method | Endpoint                           | Auth     | Description                         |
-| ------ | ---------------------------------- | -------- | ----------------------------------- |
-| POST   | `/api/v1/auth/register`            | Public   | Register new user                   |
-| POST   | `/api/v1/auth/login`               | Public   | Login, returns JWT                  |
-| GET    | `/api/v1/medicines/search?name=`   | JWT      | Search medicines + safety profiles  |
-| GET    | `/api/v1/diseases/search?query=`   | JWT      | Search diseases                     |
-| GET    | `/api/v1/symptoms/search?name=`    | JWT      | Search symptoms                     |
-| POST   | `/api/v1/appointments/book`        | PATIENT  | Book appointment + initiate payment |
-| PUT    | `/api/v1/admin/users/{id}/promote` | ADMIN    | Promote user to DOCTOR/PHARMACIST   |
-| POST   | `/payments/initiate`               | Internal | Create Stripe checkout session      |
-| POST   | `/api/webhook/stripe`              | Stripe   | Handle payment webhook events       |
-
-Full interactive documentation available at the **Live Demo** links above.
+| Method | Endpoint                           | Auth    | Description                         |
+| ------ | ---------------------------------- | ------- | ----------------------------------- |
+| POST   | `/api/v1/auth/register`            | Public  | Register new user                   |
+| POST   | `/api/v1/auth/login`               | Public  | Login, returns JWT                  |
+| GET    | `/api/v1/medicines/search?name=`   | JWT     | Search medicines + safety profiles  |
+| GET    | `/api/v1/diseases/search?query=`   | JWT     | Search diseases                     |
+| GET    | `/api/v1/symptoms/search?name=`    | JWT     | Search symptoms                     |
+| POST   | `/api/v1/appointments/book`        | PATIENT | Book appointment + initiate payment |
+| PUT    | `/api/v1/admin/users/{id}/promote` | ADMIN   | Promote user to DOCTOR/PHARMACIST   |
 
 ---
 
@@ -219,7 +209,8 @@ distributed-medical-platform/
 │   └── mysql/
 │       └── 00_init.sh        # Creates medical_db and payment_db
 ├── docs/
-│   └── architecture.png
+│   ├── architecture.png
+│   └── screenshots/
 ├── docker-compose.yml
 └── .env.example
 ```
