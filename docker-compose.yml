@@ -63,7 +63,7 @@ services:
       - medical-network
 
   payment-service:
-    image: payment:latest
+    image: bharathvepanjeri/payment-service:latest
     container_name: medical-payment
     ports:
       - "8082:8082"
@@ -83,7 +83,7 @@ services:
       - medical-network
 
   medical-service:
-    image: medical:latest
+    image: bharathvepanjeri/medical-service:latest
     container_name: medical-service
     ports:
       - "7070:7070"
@@ -108,7 +108,7 @@ services:
       - medical-network
 
   notification-service:
-    image: notification:latest
+    image: bharathvepanjeri/notification-service:latest
     container_name: medical-notification
     ports:
       - "8083:8083"
@@ -135,7 +135,7 @@ services:
       - medical-network
 
   api-gateway:
-    image: api-gateway:latest
+    image: bharathvepanjeri/api-gateway:latest
     container_name: medical-gateway
     ports:
       - "8080:8080"
