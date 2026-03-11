@@ -4,6 +4,7 @@ import com.medical.core.dto.SymptomSearchResponse;
 import com.medical.core.service.SymptomSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -26,7 +27,7 @@ public class SymptomSearchController {
   @Operation(summary = "Search symptoms", description = "Search symptoms by name with pagination. Example: ?name=fever")
   public Page<SymptomSearchResponse> searchSymptom(
       @RequestParam("name") String name,
-      @PageableDefault(size = 10, sort = "symptom") Pageable pageable) {
+      @ParameterObject @PageableDefault(size = 10, sort = "symptom") Pageable pageable) {
     return symptomSearchService.searchBySymptom(name, pageable);
   }
 }

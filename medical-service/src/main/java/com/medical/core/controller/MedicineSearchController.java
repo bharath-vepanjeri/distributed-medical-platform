@@ -7,6 +7,7 @@ import com.medical.core.service.MedicineService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -40,7 +41,7 @@ public class MedicineSearchController {
   @Operation(summary = "Search medicines", description = "Search medicines by name and view safety warnings. Example: ?name=paracetamol")
   public Page<MedicineSafetyResponse> searchMedicines(
       @RequestParam("name") String name,
-      @PageableDefault(size = 10, sort = "medicine") Pageable pageable) {
+      @ParameterObject @PageableDefault(size = 10, sort = "medicine") Pageable pageable) {
     return medicineService.getMedicineSafetyPage(name, pageable);
   }
 }
