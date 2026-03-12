@@ -8,7 +8,6 @@ A backend system built with Java and Spring Boot, designed as a set of loosely c
 
 | Service                 | URL                                             |
 | ----------------------- | ----------------------------------------------- |
-| API Gateway             | http://34.57.234.163:8080                       |
 | Medical Service Swagger | http://34.57.234.163:7070/swagger-ui/index.html |
 
 > Deployed on GCP using Docker Compose. All client requests go through the API Gateway on port 8080.
